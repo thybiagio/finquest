@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'widgets/stat_card.dart';
 import 'widgets/categoria_card.dart';
 import 'models/categoria.dart';
+import 'widgets/categoria_donut_chart.dart';
 
 void main() {
   runApp(const FinQuestApp());
@@ -80,6 +81,13 @@ static final List<Categoria> _categorias = [
                 ),
               ],
             ),
+            const SizedBox(height: 20),
+            const Text(
+              'Gastos por categoria',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
+            ),
+            const SizedBox(height: 10),
+            CategoriaDonutChart(categorias: _categorias),
             const SizedBox(height: 20),
             const Text(
               'Categorias',

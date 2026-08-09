@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Categoria {
   const Categoria({
     required this.id,
@@ -17,4 +19,10 @@ class Categoria {
       orcamentoMensal <= 0 ? 0 : (gastoAtual / orcamentoMensal).clamp(0, 1);
 
   bool get estourouOrcamento => gastoAtual > orcamentoMensal;
+
+  Color get cor {
+  final hex = corHex.replaceAll('#', '');
+  return Color(int.parse('FF$hex', radix: 16));
+}
+
 }
