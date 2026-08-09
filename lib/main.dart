@@ -4,6 +4,7 @@ import 'widgets/categoria_card.dart';
 import 'models/categoria.dart';
 import 'widgets/categoria_donut_chart.dart';
 import 'widgets/progress_rings.dart';
+import 'screens/categorias_screen.dart';
 
 void main() {
   runApp(const FinQuestApp());
@@ -16,7 +17,7 @@ class FinQuestApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FinQuest',
-        debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xFFF2F2F7),
         useMaterial3: true,
@@ -58,8 +59,20 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('FinQuest'),
-        actions: const [
-          Padding(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_view_rounded),
+            tooltip: 'Categorias',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      CategoriasScreen(categoriasIniciais: _categorias),
+                ),
+              );
+            },
+          ),
+          const Padding(
             padding: EdgeInsets.only(right: 16),
             child: Center(
               child: ProgressRings(xpPercentual: 0.78, hpPercentual: 0.82),
