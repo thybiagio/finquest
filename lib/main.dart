@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'widgets/stat_card.dart';
+import 'widgets/categoria_card.dart';
+import 'models/categoria.dart';
 
 void main() {
   runApp(const FinQuestApp());
@@ -24,30 +26,67 @@ class FinQuestApp extends StatelessWidget {
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+static final List<Categoria> _categorias = [
+    const Categoria(
+      id: '1',
+      nome: 'Alimentação',
+      corHex: '#FF9F0A',
+      orcamentoMensal: 600,
+      gastoAtual: 480,
+    ),
+    const Categoria(
+      id: '2',
+      nome: 'Transporte',
+      corHex: '#40C8E0',
+      orcamentoMensal: 350,
+      gastoAtual: 410,
+    ),
+    const Categoria(
+      id: '3',
+      nome: 'Lazer',
+      corHex: '#BF5AF2',
+      orcamentoMensal: 400,
+      gastoAtual: 190,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('FinQuest')),
-      body:  Padding(
-        padding: EdgeInsets.all(16),
-        child: GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1.6,
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ListView(
           children: [
-            StatCard(label: 'Receita', value: 'R\$ 4.500'),
-            StatCard(label: 'Gastos', value: 'R\$ 2.870'),
-            StatCard(
-              label: 'Saldo',
-              value: 'R\$ 1.630',
-              valueColor: Color(0xFF30D158),
+            GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.6,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: const [
+                StatCard(label: 'Receita', value: 'R\$ 4.500'),
+                StatCard(label: 'Gastos', value: 'R\$ 2.870'),
+                StatCard(
+                  label: 'Saldo',
+                  value: 'R\$ 1.630',
+                  valueColor: Color(0xFF30D158),
+                ),
+                StatCard(
+                  label: 'Economia',
+                  value: 'R\$ 800',
+                  valueColor: Color(0xFF30D158),
+                ),
+              ],
             ),
-            StatCard(
-              label: 'Economia',
-              value: 'R\$ 800',
-              valueColor: Color(0xFF30D158),
+            const SizedBox(height: 20),
+            const Text(
+              'Categorias',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
             ),
+            const SizedBox(height: 10),
+            for (final categoria in _categorias) CategoriaCard(categoria: categoria),
           ],
         ),
       ),
