@@ -2,7 +2,6 @@ class Meta {
     const Meta({
       required this.id,
       required this.titulo,
-      required this.titulo,
       required this.valorAlvo,
       this.valorAtual = 0.0,
     }) : assert(valorAlvo > 0, 'valorAlvo deve ser maior que zero');
