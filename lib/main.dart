@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'widgets/stat_card.dart';
-import 'widgets/categoria_card.dart';
-import 'widgets/transacao_tile.dart';
 import 'models/categoria.dart';
 import 'models/transacao.dart';
-import 'widgets/categoria_donut_chart.dart';
+import 'screens/home_content.dart';
+import 'screens/categorias_content.dart';
+import 'screens/metas_screen.dart';
+import 'screens/perfil_screen.dart';
 import 'widgets/progress_rings.dart';
-import 'screens/categorias_screen.dart';
 
 void main() {
   runApp(const FinQuestApp());
@@ -24,55 +23,45 @@ class FinQuestApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF2F2F7),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const AppShell(),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class AppShell extends StatefulWidget {
+  const AppShell({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<AppShell> createState() => _AppShellState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _AppShellState extends State<AppShell> {
+  int _abaAtual = 0;
+
   late List<Categoria> _categorias;
   double _receitaTotal = 4500;
   final List<Transacao> _transacoes = [];
+
+  static const _titulos = ['FinQuest', 'Categorias', 'Metas', 'Perfil'];
 
   @override
   void initState() {
     super.initState();
     _categorias = [
-      const Categoria(
-        id: '1',
-        nome: 'Alimentação',
-        corHex: '#FF9F0A',
-        orcamentoMensal: 600,
-        gastoAtual: 480,
-      ),
-      const Categoria(
-        id: '2',
-        nome: 'Transporte',
-        corHex: '#40C8E0',
-        orcamentoMensal: 350,
-        gastoAtual: 410,
-      ),
-      const Categoria(
-        id: '3',
-        nome: 'Lazer',
-        corHex: '#BF5AF2',
-        orcamentoMensal: 400,
-        gastoAtual: 190,
-      ),
+      const Categoria(id: '1', nome: 'Alimentação', corHex: '#FF9F0A', orcamentoMensal: 600, gastoAtual: 480),
+      const Categoria(id: '2', nome: 'Transporte', corHex: '#40C8E0', orcamentoMensal: 350, gastoAtual: 410),
+      const Categoria(id: '3', nome: 'Lazer', corHex: '#BF5AF2', orcamentoMensal: 400, gastoAtual: 190),
     ];
   }
 
-  double get _despesaTotal =>
-      _categorias.fold(0.0, (soma, categoria) => soma + categoria.gastoAtual);
-
+  double get _despesaTotal => _categorias.fold(0.0, (soma, c) => soma + c.gastoAtual);
   double get _saldo => _receitaTotal - _despesaTotal;
+
+  void _adicionarCategoria(Categoria categoria) {
+    setState(() {
+      _categorias = [..._categorias, categoria];
+    });
+  }
 
   void _registrarTransacao({
     required double valor,
@@ -86,11 +75,9 @@ class _HomeScreenState extends State<HomeScreen> {
       } else if (categoria != null) {
         final index = _categorias.indexOf(categoria);
         if (index != -1) {
-          _categorias[index] =
-              categoria.copyWith(gastoAtual: categoria.gastoAtual + valor);
+          _categorias[index] = categoria.copyWith(gastoAtual: categoria.gastoAtual + valor);
         }
       }
-
       _transacoes.add(
         Transacao(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -108,44 +95,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final valorController = TextEditingController();
     final descricaoController = TextEditingController();
     var tipo = TipoTransacao.despesa;
-    Categoria? categoriaSelecionada =
-        _categorias.isNotEmpty ? _categorias.first : null;
+    Categoria? categoriaSelecionada = _categorias.isNotEmpty ? _categorias.first : null;
 
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
+              padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Nova transação',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  const Text('Nova transação', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   SegmentedButton<TipoTransacao>(
                     segments: const [
-                      ButtonSegment(
-                        value: TipoTransacao.despesa,
-                        label: Text('Despesa'),
-                      ),
-                      ButtonSegment(
-                        value: TipoTransacao.receita,
-                        label: Text('Receita'),
-                      ),
+                      ButtonSegment(value: TipoTransacao.despesa, label: Text('Despesa')),
+                      ButtonSegment(value: TipoTransacao.receita, label: Text('Receita')),
                     ],
                     selected: {tipo},
                     onSelectionChanged: (novaSelecao) {
@@ -153,11 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  TextField(
-                    controller: valorController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Valor'),
-                  ),
+                  TextField(controller: valorController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Valor')),
                   if (tipo == TipoTransacao.despesa) ...[
                     const SizedBox(height: 12),
                     DropdownButtonFormField<Categoria>(
@@ -165,10 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: const InputDecoration(labelText: 'Categoria'),
                       items: [
                         for (final categoria in _categorias)
-                          DropdownMenuItem(
-                            value: categoria,
-                            child: Text(categoria.nome),
-                          ),
+                          DropdownMenuItem(value: categoria, child: Text(categoria.nome)),
                       ],
                       onChanged: (nova) {
                         setModalState(() => categoriaSelecionada = nova);
@@ -176,11 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: descricaoController,
-                    decoration:
-                        const InputDecoration(labelText: 'Descrição (opcional)'),
-                  ),
+                  TextField(controller: descricaoController, decoration: const InputDecoration(labelText: 'Descrição (opcional)')),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -188,20 +147,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () {
                         final valor = double.tryParse(valorController.text) ?? 0;
                         if (valor <= 0) return;
-                        if (tipo == TipoTransacao.despesa &&
-                            categoriaSelecionada == null) {
-                          return;
-                        }
+                        if (tipo == TipoTransacao.despesa && categoriaSelecionada == null) return;
 
                         _registrarTransacao(
                           valor: valor,
                           tipo: tipo,
-                          categoria: tipo == TipoTransacao.despesa
-                              ? categoriaSelecionada
-                              : null,
-                          descricao: descricaoController.text.trim().isEmpty
-                              ? null
-                              : descricaoController.text.trim(),
+                          categoria: tipo == TipoTransacao.despesa ? categoriaSelecionada : null,
+                          descricao: descricaoController.text.trim().isEmpty ? null : descricaoController.text.trim(),
                         );
                         Navigator.of(context).pop();
                       },
@@ -219,101 +171,53 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final telas = [
+      HomeContent(
+        categorias: _categorias,
+        transacoes: _transacoes,
+        receitaTotal: _receitaTotal,
+        despesaTotal: _despesaTotal,
+        saldo: _saldo,
+      ),
+      CategoriasContent(
+        categorias: _categorias,
+        onAdicionarCategoria: _adicionarCategoria,
+      ),
+      const MetasScreen(),
+      const PerfilScreen(),
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('FinQuest'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.grid_view_rounded),
-            tooltip: 'Categorias',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) =>
-                      CategoriasScreen(categoriasIniciais: _categorias),
+        title: Text(_titulos[_abaAtual]),
+        actions: _abaAtual == 0
+            ? const [
+                Padding(
+                  padding: EdgeInsets.only(right: 16),
+                  child: Center(
+                    child: ProgressRings(xpPercentual: 0.78, hpPercentual: 0.82),
+                  ),
                 ),
-              );
-            },
-          ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Center(
-              child: ProgressRings(xpPercentual: 0.78, hpPercentual: 0.82),
-            ),
-          ),
+              ]
+            : null,
+      ),
+      body: IndexedStack(index: _abaAtual, children: telas),
+      floatingActionButton: _abaAtual == 0
+          ? FloatingActionButton(
+              onPressed: () => _abrirNovaTransacao(context),
+              backgroundColor: const Color(0xFF0A84FF),
+              child: const Icon(Icons.add),
+            )
+          : null,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _abaAtual,
+        onDestinationSelected: (index) => setState(() => _abaAtual = index),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Início'),
+          NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view), label: 'Categorias'),
+          NavigationDestination(icon: Icon(Icons.flag_outlined), selectedIcon: Icon(Icons.flag), label: 'Metas'),
+          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Perfil'),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _abrirNovaTransacao(context),
-        backgroundColor: const Color(0xFF0A84FF),
-        child: const Icon(Icons.add),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 1.6,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                StatCard(
-                  label: 'Receita',
-                  value: 'R\$ ${_receitaTotal.toStringAsFixed(0)}',
-                ),
-                StatCard(
-                  label: 'Gastos',
-                  value: 'R\$ ${_despesaTotal.toStringAsFixed(0)}',
-                ),
-                StatCard(
-                  label: 'Saldo',
-                  value: 'R\$ ${_saldo.toStringAsFixed(0)}',
-                  valueColor: const Color(0xFF30D158),
-                ),
-                const StatCard(
-                  label: 'Economia',
-                  value: 'R\$ 800',
-                  valueColor: Color(0xFF30D158),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Gastos por categoria',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
-            ),
-            const SizedBox(height: 10),
-            CategoriaDonutChart(categorias: _categorias),
-            const SizedBox(height: 20),
-            const Text(
-              'Categorias',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
-            ),
-            const SizedBox(height: 10),
-            for (final categoria in _categorias) CategoriaCard(categoria: categoria),
-            const SizedBox(height: 20),
-            const Text(
-              'Histórico',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
-            ),
-            const SizedBox(height: 6),
-            if (_transacoes.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'Nenhuma transação ainda',
-                  style: TextStyle(fontSize: 12, color: Colors.black38),
-                ),
-              )
-            else
-              for (final transacao in _transacoes.reversed)
-                TransacaoTile(transacao: transacao),
-              const SizedBox(height: 80),
-          ],
-        ),
       ),
     );
   }
