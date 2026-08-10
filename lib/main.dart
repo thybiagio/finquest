@@ -3,9 +3,10 @@ import 'models/categoria.dart';
 import 'models/transacao.dart';
 import 'screens/home_content.dart';
 import 'screens/categorias_content.dart';
-import 'screens/metas_screen.dart';
+import 'screens/metas_content.dart';
 import 'screens/perfil_screen.dart';
 import 'widgets/progress_rings.dart';
+import 'models/meta.dart';
 
 void main() {
   runApp(const FinQuestApp());
@@ -41,6 +42,7 @@ class _AppShellState extends State<AppShell> {
   late List<Categoria> _categorias;
   double _receitaTotal = 4500;
   final List<Transacao> _transacoes = [];
+  final List<Meta> _metas = [];
 
   static const _titulos = ['FinQuest', 'Categorias', 'Metas', 'Perfil'];
 
@@ -60,6 +62,12 @@ class _AppShellState extends State<AppShell> {
   void _adicionarCategoria(Categoria categoria) {
     setState(() {
       _categorias = [..._categorias, categoria];
+    });
+  }
+
+  void _adicionarMeta(Meta meta) {
+    setState(() {
+      _metas.add(meta);
     });
   }
 
@@ -183,7 +191,7 @@ class _AppShellState extends State<AppShell> {
         categorias: _categorias,
         onAdicionarCategoria: _adicionarCategoria,
       ),
-      const MetasScreen(),
+      MetasContent(metas: _metas, onAdicionarMeta: _adicionarMeta),
       const PerfilScreen(),
     ];
 
