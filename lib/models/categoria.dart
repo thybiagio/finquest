@@ -25,4 +25,14 @@ class Categoria {
   return Color(int.parse('FF$hex', radix: 16));
 }
 
+Categoria copyWith({double? gastoAtual}) {
+  return Categoria(
+    id: id,
+    nome: nome,
+    corHex: corHex,
+    orcamentoMensal: orcamentoMensal,
+    gastoAtual: gastoAtual ?? this.gastoAtual,
+  );
+}
+
 }
