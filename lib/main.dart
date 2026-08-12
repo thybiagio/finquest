@@ -44,6 +44,11 @@ class _AppShellState extends State<AppShell> {
   final List<Transacao> _transacoes = [];
   final List<Meta> _metas = [];
 
+  final String _nomeJogador = 'Aventureiro';
+  int _nivel = 1;
+  int _xpAtual = 0;
+  static const int _xpPorNivel = 100;
+
   static const _titulos = ['FinQuest', 'Categorias', 'Metas', 'Perfil'];
 
   @override
@@ -58,6 +63,24 @@ class _AppShellState extends State<AppShell> {
 
   double get _despesaTotal => _categorias.fold(0.0, (soma, c) => soma + c.gastoAtual);
   double get _saldo => _receitaTotal - _despesaTotal;
+
+  double get _xpPercentual => _xpAtual / _xpPorNivel;
+
+  double get _hpPercentual {
+    final categoriasEstouradas = _categorias.where((c) => c.estourouOrcamento).length;
+    var hp = 100.0;
+    hp -= categoriasEstouradas * 15;
+    if (_saldo < 0) hp -= 20;
+    return (hp / 100).clamp(0.0, 1.0);
+  }
+
+  void _ganharXp(int quantidade) {
+    _xpAtual += quantidade;
+    while (_xpAtual >= _xpPorNivel) {
+      _xpAtual -= _xpPorNivel;
+      _nivel++;
+    }
+  }
 
   void _adicionarCategoria(Categoria categoria) {
     setState(() {
@@ -74,7 +97,11 @@ class _AppShellState extends State<AppShell> {
   void _contribuirParaMeta(Meta meta, double valor) {
     final index = _metas.indexOf(meta);
     if (index != -1) {
-      _metas[index] = meta.copyWith(valorAtual: meta.valorAtual + valor);
+      final metaAtualizada = meta.copyWith(valorAtual: meta.valorAtual + valor);
+      _metas[index] = metaAtualizada;
+      if (!meta.concluida && metaAtualizada.concluida) {
+        _ganharXp(50);
+      }
     }
   }
 
@@ -86,6 +113,7 @@ class _AppShellState extends State<AppShell> {
     Meta? metaDestino,
   }) {
     setState(() {
+      _ganharXp(5);
       if (tipo == TipoTransacao.receita) {
         if (metaDestino != null) {
           _contribuirParaMeta(metaDestino, valor);
@@ -224,18 +252,23 @@ class _AppShellState extends State<AppShell> {
         onAdicionarCategoria: _adicionarCategoria,
       ),
       MetasContent(metas: _metas, onAdicionarMeta: _adicionarMeta),
-      const PerfilScreen(),
+      PerfilScreen(
+        nome: _nomeJogador,
+        nivel: _nivel,
+        xpPercentual: _xpPercentual,
+        hpPercentual: _hpPercentual,
+      ),
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(_titulos[_abaAtual]),
         actions: _abaAtual == 0
-            ? const [
+            ? [
                 Padding(
-                  padding: EdgeInsets.only(right: 16),
+                  padding: const EdgeInsets.only(right: 16),
                   child: Center(
-                    child: ProgressRings(xpPercentual: 0.78, hpPercentual: 0.82),
+                    child: ProgressRings(xpPercentual: _xpPercentual, hpPercentual: _hpPercentual),
                   ),
                 ),
               ]

@@ -1,12 +1,121 @@
 import 'package:flutter/material.dart';
+import '../widgets/progress_rings.dart';
 
 class PerfilScreen extends StatelessWidget {
-  const PerfilScreen({super.key});
+  const PerfilScreen({
+    super.key,
+    required this.nome,
+    required this.nivel,
+    required this.xpPercentual,
+    required this.hpPercentual,
+  });
+
+  final String nome;
+  final int nivel;
+  final double xpPercentual;
+  final double hpPercentual;
+
+  static const _corXp = Color(0xFFBF5AF2);
+  static const _corHp = Color(0xFF30D158);
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Perfil em breve', style: TextStyle(color: Colors.black45)),
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: ListView(
+        children: [
+          const SizedBox(height: 12),
+          Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 140,
+                  height: 140,
+                  child: ProgressRings(xpPercentual: xpPercentual, hpPercentual: hpPercentual),
+                ),
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0A84FF),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.person, size: 46, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Text(nome, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(height: 4),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0A84FF).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'Nível $nivel',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0A84FF)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+          const Text('Progresso', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54)),
+          const SizedBox(height: 10),
+          _BarraStat(label: 'XP', percentual: xpPercentual, cor: _corXp),
+          const SizedBox(height: 12),
+          _BarraStat(label: 'HP', percentual: hpPercentual, cor: _corHp),
+        ],
+      ),
+    );
+  }
+}
+
+class _BarraStat extends StatelessWidget {
+  const _BarraStat({required this.label, required this.percentual, required this.cor});
+
+  final String label;
+  final double percentual;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+              Text(
+                '${(percentual * 100).round()}%',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: cor),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: percentual.clamp(0.0, 1.0),
+              minHeight: 8,
+              backgroundColor: Colors.black12,
+              valueColor: AlwaysStoppedAnimation(cor),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
