@@ -15,4 +15,14 @@ class Meta {
       valorAlvo <= 0 ? 0 : (valorAtual / valorAlvo).clamp(0, 1);
 
     bool get concluida => valorAtual >= valorAlvo;
+
+    Meta copyWith({double? valorAtual}) {
+        return Meta(
+          id: id,
+          titulo: titulo,
+          valorAlvo: valorAlvo,
+          valorAtual: valorAtual ?? this.valorAtual,
+        );
+    }
+
 }

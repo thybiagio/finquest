@@ -71,15 +71,27 @@ class _AppShellState extends State<AppShell> {
     });
   }
 
+  void _contribuirParaMeta(Meta meta, double valor) {
+    final index = _metas.indexOf(meta);
+    if (index != -1) {
+      _metas[index] = meta.copyWith(valorAtual: meta.valorAtual + valor);
+    }
+  }
+
   void _registrarTransacao({
     required double valor,
     required TipoTransacao tipo,
     Categoria? categoria,
     String? descricao,
+    Meta? metaDestino,
   }) {
     setState(() {
       if (tipo == TipoTransacao.receita) {
-        _receitaTotal += valor;
+        if (metaDestino != null) {
+          _contribuirParaMeta(metaDestino, valor);
+        } else {
+          _receitaTotal += valor;
+        }
       } else if (categoria != null) {
         final index = _categorias.indexOf(categoria);
         if (index != -1) {
@@ -104,6 +116,7 @@ class _AppShellState extends State<AppShell> {
     final descricaoController = TextEditingController();
     var tipo = TipoTransacao.despesa;
     Categoria? categoriaSelecionada = _categorias.isNotEmpty ? _categorias.first : null;
+    Meta? metaSelecionada;
 
     await showModalBottomSheet(
       context: context,
@@ -146,6 +159,24 @@ class _AppShellState extends State<AppShell> {
                       },
                     ),
                   ],
+                  if (tipo == TipoTransacao.receita && _metas.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<Meta?>(
+                      initialValue: metaSelecionada,
+                      decoration: const InputDecoration(
+                        labelText: 'Destino',
+                        helperText: 'Vai para o saldo ou inteiro para uma meta',
+                      ),
+                      items: [
+                        const DropdownMenuItem<Meta?>(value: null, child: Text('Saldo disponível')),
+                        for (final meta in _metas)
+                          DropdownMenuItem(value: meta, child: Text('Meta: ${meta.titulo}')),
+                      ],
+                      onChanged: (nova) {
+                        setModalState(() => metaSelecionada = nova);
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   TextField(controller: descricaoController, decoration: const InputDecoration(labelText: 'Descrição (opcional)')),
                   const SizedBox(height: 20),
@@ -162,6 +193,7 @@ class _AppShellState extends State<AppShell> {
                           tipo: tipo,
                           categoria: tipo == TipoTransacao.despesa ? categoriaSelecionada : null,
                           descricao: descricaoController.text.trim().isEmpty ? null : descricaoController.text.trim(),
+                          metaDestino: tipo == TipoTransacao.receita ? metaSelecionada : null,
                         );
                         Navigator.of(context).pop();
                       },
