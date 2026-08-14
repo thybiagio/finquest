@@ -44,7 +44,7 @@ class _AppShellState extends State<AppShell> {
   final List<Transacao> _transacoes = [];
   final List<Meta> _metas = [];
 
-  final String _nomeJogador = 'Aventureiro';
+  String _nomeJogador = 'Aventureiro';
   int _nivel = 1;
   int _xpAtual = 0;
   static const int _xpPorNivel = 100;
@@ -80,6 +80,14 @@ class _AppShellState extends State<AppShell> {
       _xpAtual -= _xpPorNivel;
       _nivel++;
     }
+  }
+
+  void _editarNome(String novoNome) {
+    final nome = novoNome.trim();
+    if (nome.isEmpty) return;
+    setState(() {
+      _nomeJogador = nome;
+    });
   }
 
   void _adicionarCategoria(Categoria categoria) {
@@ -257,6 +265,7 @@ class _AppShellState extends State<AppShell> {
         nivel: _nivel,
         xpPercentual: _xpPercentual,
         hpPercentual: _hpPercentual,
+        onEditarNome: _editarNome,
       ),
     ];
 

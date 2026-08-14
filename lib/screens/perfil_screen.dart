@@ -9,15 +9,45 @@ class PerfilScreen extends StatelessWidget {
     required this.nivel,
     required this.xpPercentual,
     required this.hpPercentual,
+    required this.onEditarNome,
   });
 
   final String nome;
   final int nivel;
   final double xpPercentual;
   final double hpPercentual;
+  final ValueChanged<String> onEditarNome;
 
   static const _corXp = Color(0xFFBF5AF2);
   static const _corHp = Color(0xFF30D158);
+
+  Future<void> _abrirEdicaoNome(BuildContext context) async {
+    final controller = TextEditingController(text: nome);
+    final novoNome = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar nome'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Nome do jogador'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+    if (novoNome != null && novoNome.trim().isNotEmpty) {
+      onEditarNome(novoNome.trim());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +92,17 @@ class PerfilScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Center(
-            child: Text(nome, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            child: GestureDetector(
+              onTap: () => _abrirEdicaoNome(context),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(nome, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.edit, size: 16, color: Colors.black45),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 6),
           Center(
