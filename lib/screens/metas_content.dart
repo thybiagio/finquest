@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/meta.dart';
 import '../widgets/meta_card.dart';
+import '../widgets/grouped_card.dart';
 
 class MetasContent extends StatefulWidget {
   const MetasContent({
@@ -90,7 +91,9 @@ class _MetasContentState extends State<MetasContent> {
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    for (final meta in widget.metas) MetaCard(meta: meta),
+                    GroupedCard(
+                      children: [for (final meta in widget.metas) MetaCard(meta: meta)],
+                    ),
                   ],
                 ),
         ),

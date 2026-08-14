@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/categoria.dart';
 import '../widgets/categoria_card.dart';
+import '../widgets/grouped_card.dart';
 
 class CategoriasContent extends StatefulWidget {
   const CategoriasContent({
@@ -84,12 +85,20 @@ class _CategoriasContentState extends State<CategoriasContent> {
           ),
         ),
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              for (final categoria in widget.categorias) CategoriaCard(categoria: categoria),
-            ],
-          ),
+          child: widget.categorias.isEmpty
+              ? const Center(
+                  child: Text('Nenhuma categoria ainda', style: TextStyle(color: Colors.black45)),
+                )
+              : ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    GroupedCard(
+                      children: [
+                        for (final categoria in widget.categorias) CategoriaCard(categoria: categoria),
+                      ],
+                    ),
+                  ],
+                ),
         ),
       ],
     );

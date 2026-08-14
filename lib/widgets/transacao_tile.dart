@@ -13,7 +13,7 @@ class TransacaoTile extends StatelessWidget {
     final rotulo = transacao.isReceita ? 'Receita' : (transacao.categoria?.nome ?? 'Despesa');
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
           Expanded(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/meta.dart';
 
+/// Uma linha de meta, pensada para ser usada dentro de um GroupedCard
+/// (sem fundo/margem próprios).
 class MetaCard extends StatelessWidget {
   const MetaCard({super.key, required this.meta});
 
@@ -10,13 +12,8 @@ class MetaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cor = meta.concluida ? const Color(0xFF30D158) : const Color(0xFF0A84FF);
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(14),
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

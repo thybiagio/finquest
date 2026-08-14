@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/categoria.dart';
 
+/// Uma linha de categoria, pensada para ser usada dentro de um GroupedCard
+/// (sem fundo/margem próprios, já que o agrupamento fica por conta do container pai).
 class CategoriaCard extends StatelessWidget {
   const CategoriaCard({super.key, required this.categoria});
 
@@ -10,13 +12,8 @@ class CategoriaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cor = categoria.estourouOrcamento ? Colors.red : Colors.green;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(14),
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
