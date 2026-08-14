@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/progress_rings.dart';
+import '../models/rank.dart';
 
 class PerfilScreen extends StatelessWidget {
   const PerfilScreen({
@@ -20,6 +21,8 @@ class PerfilScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final rank = rankParaNivel(nivel);
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: ListView(
@@ -35,13 +38,24 @@ class PerfilScreen extends StatelessWidget {
                   child: ProgressRings(xpPercentual: xpPercentual, hpPercentual: hpPercentual),
                 ),
                 Container(
-                  width: 90,
-                  height: 90,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0A84FF),
+                  width: 104,
+                  height: 104,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [rank.corPrimaria, rank.corSecundaria],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
-                  child: const Icon(Icons.person, size: 46, color: Colors.white),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF0A84FF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.person, size: 44, color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -50,17 +64,17 @@ class PerfilScreen extends StatelessWidget {
           Center(
             child: Text(nome, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF0A84FF).withValues(alpha: 0.12),
+                gradient: LinearGradient(colors: [rank.corPrimaria, rank.corSecundaria]),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Nível $nivel',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0A84FF)),
+                '${rank.nome} · Nível $nivel',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
               ),
             ),
           ),
