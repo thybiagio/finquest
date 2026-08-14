@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/categoria.dart';
 import 'models/transacao.dart';
+import 'models/medalha.dart';
 import 'screens/home_content.dart';
 import 'screens/categorias_content.dart';
 import 'screens/metas_content.dart';
@@ -266,6 +267,13 @@ class _AppShellState extends State<AppShell> {
         xpPercentual: _xpPercentual,
         hpPercentual: _hpPercentual,
         onEditarNome: _editarNome,
+        medalhas: calcularMedalhas(
+          transacoesCount: _transacoes.length,
+          categoriasCount: _categorias.length,
+          metasCount: _metas.length,
+          metasConcluidasCount: _metas.where((m) => m.concluida).length,
+          nivel: _nivel,
+        ),
       ),
     ];
 

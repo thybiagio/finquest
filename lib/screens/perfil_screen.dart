@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/progress_rings.dart';
 import '../models/rank.dart';
+import '../models/medalha.dart';
 
 class PerfilScreen extends StatelessWidget {
   const PerfilScreen({
@@ -10,6 +11,7 @@ class PerfilScreen extends StatelessWidget {
     required this.xpPercentual,
     required this.hpPercentual,
     required this.onEditarNome,
+    required this.medalhas,
   });
 
   final String nome;
@@ -17,6 +19,7 @@ class PerfilScreen extends StatelessWidget {
   final double xpPercentual;
   final double hpPercentual;
   final ValueChanged<String> onEditarNome;
+  final List<Medalha> medalhas;
 
   static const _corXp = Color(0xFFBF5AF2);
   static const _corHp = Color(0xFF30D158);
@@ -52,6 +55,7 @@ class PerfilScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rank = rankParaNivel(nivel);
+    final desbloqueadas = medalhas.where((m) => m.desbloqueada).length;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -124,6 +128,62 @@ class PerfilScreen extends StatelessWidget {
           _BarraStat(label: 'XP', percentual: xpPercentual, cor: _corXp),
           const SizedBox(height: 12),
           _BarraStat(label: 'HP', percentual: hpPercentual, cor: _corHp),
+          const SizedBox(height: 28),
+          Text(
+            'Medalhas ($desbloqueadas/${medalhas.length})',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
+          ),
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 4,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 8,
+            children: [
+              for (final medalha in medalhas) _MedalhaBadge(medalha: medalha),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MedalhaBadge extends StatelessWidget {
+  const _MedalhaBadge({required this.medalha});
+
+  final Medalha medalha;
+
+  @override
+  Widget build(BuildContext context) {
+    final cor = medalha.desbloqueada ? const Color(0xFFFFD60A) : Colors.black26;
+    return Tooltip(
+      message: '${medalha.nome}\n${medalha.descricao}',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: medalha.desbloqueada ? cor.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.05),
+              shape: BoxShape.circle,
+              border: Border.all(color: cor, width: 2),
+            ),
+            child: Icon(medalha.icone, color: cor, size: 26),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            medalha.nome,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 10,
+              color: medalha.desbloqueada ? Colors.black87 : Colors.black38,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
