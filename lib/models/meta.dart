@@ -25,4 +25,18 @@ class Meta {
         );
     }
 
+    Map<String, dynamic> toMap() => {
+      'id': id,
+      'titulo': titulo,
+      'valorAlvo': valorAlvo,
+      'valorAtual': valorAtual,
+    };
+
+factory Meta.fromMap(Map<String, dynamic> map) => Meta(
+      id: map['id'] as String,
+      titulo: map['titulo'] as String,
+      valorAlvo: (map['valorAlvo'] as num).toDouble(),
+      valorAtual: (map['valorAtual'] as num).toDouble(),
+    );
+
 }

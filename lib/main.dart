@@ -8,6 +8,7 @@ import 'screens/metas_content.dart';
 import 'screens/perfil_screen.dart';
 import 'widgets/progress_rings.dart';
 import 'models/meta.dart';
+import 'services/storage_service.dart';
 
 void main() {
   runApp(const FinQuestApp());
@@ -61,6 +62,9 @@ class _AppShellState extends State<AppShell> {
   int _xpAtual = 0;
   static const int _xpPorNivel = 100;
 
+  final StorageService _storage = StorageService();
+  bool _carregando = true;
+
   static const _titulos = ['FinQuest', 'Categorias', 'Metas', 'Perfil'];
 
   @override
@@ -71,6 +75,43 @@ class _AppShellState extends State<AppShell> {
       const Categoria(id: '2', nome: 'Transporte', corHex: '#40C8E0', orcamentoMensal: 350, gastoAtual: 410),
       const Categoria(id: '3', nome: 'Lazer', corHex: '#BF5AF2', orcamentoMensal: 400, gastoAtual: 190),
     ];
+    _carregarEstadoSalvo();
+  }
+
+  Future<void> _carregarEstadoSalvo() async {
+    final estado = await _storage.carregar();
+    if (estado != null) {
+      setState(() {
+        _categorias = estado.categorias;
+        _transacoes
+          ..clear()
+          ..addAll(estado.transacoes);
+        _metas
+          ..clear()
+          ..addAll(estado.metas);
+        _receitaTotal = estado.receitaTotal;
+        _nomeJogador = estado.nomeJogador;
+        _nivel = estado.nivel;
+        _xpAtual = estado.xpAtual;
+        _carregando = false;
+      });
+    } else {
+      setState(() => _carregando = false);
+    }
+  }
+
+  void _salvarEstadoAtual() {
+    _storage.salvar(
+      EstadoFinQuest(
+        categorias: _categorias,
+        transacoes: _transacoes,
+        metas: _metas,
+        receitaTotal: _receitaTotal,
+        nomeJogador: _nomeJogador,
+        nivel: _nivel,
+        xpAtual: _xpAtual,
+      ),
+    );
   }
 
   double get _despesaTotal => _categorias.fold(0.0, (soma, c) => soma + c.gastoAtual);
@@ -100,18 +141,21 @@ class _AppShellState extends State<AppShell> {
     setState(() {
       _nomeJogador = nome;
     });
+    _salvarEstadoAtual();
   }
 
   void _adicionarCategoria(Categoria categoria) {
     setState(() {
       _categorias = [..._categorias, categoria];
     });
+    _salvarEstadoAtual();
   }
 
   void _adicionarMeta(Meta meta) {
     setState(() {
       _metas.add(meta);
     });
+    _salvarEstadoAtual();
   }
 
   void _contribuirParaMeta(Meta meta, double valor) {
@@ -157,6 +201,7 @@ class _AppShellState extends State<AppShell> {
         ),
       );
     });
+    _salvarEstadoAtual();
   }
 
   Future<void> _abrirNovaTransacao(BuildContext context) async {
@@ -259,6 +304,12 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (_carregando) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final telas = [
       HomeContent(
         categorias: _categorias,
