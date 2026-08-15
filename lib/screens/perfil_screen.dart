@@ -128,21 +128,30 @@ class PerfilScreen extends StatelessWidget {
           _BarraStat(label: 'XP', percentual: xpPercentual, cor: _corXp),
           const SizedBox(height: 12),
           _BarraStat(label: 'HP', percentual: hpPercentual, cor: _corHp),
+          
           const SizedBox(height: 28),
           Text(
             'Medalhas ($desbloqueadas/${medalhas.length})',
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54),
           ),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 14,
-            crossAxisSpacing: 8,
-            children: [
-              for (final medalha in medalhas) _MedalhaBadge(medalha: medalha),
-            ],
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: GridView.count(
+              crossAxisCount: 4,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 4,
+              childAspectRatio: 0.8,
+              children: [
+                for (final medalha in medalhas) _MedalhaBadge(medalha: medalha),
+              ],
+            ),
           ),
         ],
       ),

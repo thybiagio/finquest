@@ -25,6 +25,17 @@ class FinQuestApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF2F2F7),
         useMaterial3: true,
       ),
+      builder: (context, child) {
+        return Container(
+          color: const Color(0xFFD1D1D6),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: child,
+            ),
+          ),
+        );
+      },
       home: const AppShell(),
     );
   }
