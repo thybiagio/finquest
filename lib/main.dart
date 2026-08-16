@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'models/categoria.dart';
 import 'models/transacao.dart';
 import 'models/medalha.dart';
@@ -62,6 +64,9 @@ class _AppShellState extends State<AppShell> {
   int _nivel = 1;
   int _xpAtual = 0;
   static const int _xpPorNivel = 100;
+  String? _fotoPerfilBase64;
+
+  final ImagePicker _imagePicker = ImagePicker();
 
   final StorageService _storage = StorageService();
   bool _carregando = true;
@@ -94,6 +99,7 @@ class _AppShellState extends State<AppShell> {
         _nomeJogador = estado.nomeJogador;
         _nivel = estado.nivel;
         _xpAtual = estado.xpAtual;
+        _fotoPerfilBase64 = estado.fotoPerfilBase64;
         _carregando = false;
       });
     } else {
@@ -111,6 +117,7 @@ class _AppShellState extends State<AppShell> {
         nomeJogador: _nomeJogador,
         nivel: _nivel,
         xpAtual: _xpAtual,
+        fotoPerfilBase64: _fotoPerfilBase64,
       ),
     );
   }
@@ -144,6 +151,64 @@ class _AppShellState extends State<AppShell> {
       _nomeJogador = nome;
     });
     _salvarEstadoAtual();
+  }
+
+  Future<void> _escolherFotoPerfil(ImageSource origem) async {
+    final arquivo = await _imagePicker.pickImage(source: origem, maxWidth: 512, imageQuality: 80);
+    if (arquivo == null) return;
+    final bytes = await arquivo.readAsBytes();
+    setState(() {
+      _fotoPerfilBase64 = base64Encode(bytes);
+    });
+    _salvarEstadoAtual();
+  }
+
+  void _removerFotoPerfil() {
+    setState(() {
+      _fotoPerfilBase64 = null;
+    });
+    _salvarEstadoAtual();
+  }
+
+  Future<void> _abrirMenuFotoPerfil(BuildContext context) async {
+    await showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Escolher da galeria'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _escolherFotoPerfil(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera_outlined),
+                title: const Text('Tirar foto'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _escolherFotoPerfil(ImageSource.camera);
+                },
+              ),
+              if (_fotoPerfilBase64 != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  title: const Text('Remover foto', style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _removerFotoPerfil();
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // ---------------------- Categorias ----------------------
@@ -609,6 +674,8 @@ class _AppShellState extends State<AppShell> {
         xpPercentual: _xpPercentual,
         hpPercentual: _hpPercentual,
         onEditarNome: _editarNome,
+        fotoPerfilBase64: _fotoPerfilBase64,
+        onTocarFoto: () => _abrirMenuFotoPerfil(context),
         medalhas: calcularMedalhas(
           transacoesCount: _transacoes.length,
           categoriasCount: _categorias.length,

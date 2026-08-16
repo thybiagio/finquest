@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../widgets/progress_rings.dart';
 import '../models/rank.dart';
@@ -12,6 +13,8 @@ class PerfilScreen extends StatelessWidget {
     required this.hpPercentual,
     required this.onEditarNome,
     required this.medalhas,
+    this.fotoPerfilBase64,
+    required this.onTocarFoto,
   });
 
   final String nome;
@@ -20,6 +23,8 @@ class PerfilScreen extends StatelessWidget {
   final double hpPercentual;
   final ValueChanged<String> onEditarNome;
   final List<Medalha> medalhas;
+  final String? fotoPerfilBase64;
+  final VoidCallback onTocarFoto;
 
   static const _corXp = Color(0xFFBF5AF2);
   static const _corHp = Color(0xFF30D158);
@@ -63,35 +68,57 @@ class PerfilScreen extends StatelessWidget {
         children: [
           const SizedBox(height: 12),
           Center(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 140,
-                  height: 140,
-                  child: ProgressRings(xpPercentual: xpPercentual, hpPercentual: hpPercentual),
-                ),
-                Container(
-                  width: 104,
-                  height: 104,
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [rank.corPrimaria, rank.corSecundaria],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+            child: GestureDetector(
+              onTap: onTocarFoto,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 140,
+                    height: 140,
+                    child: ProgressRings(xpPercentual: xpPercentual, hpPercentual: hpPercentual),
                   ),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF0A84FF),
+                  Container(
+                    width: 104,
+                    height: 104,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [rank.corPrimaria, rank.corSecundaria],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                     ),
-                    child: const Icon(Icons.person, size: 44, color: Colors.white),
+                    child: ClipOval(
+                      child: fotoPerfilBase64 != null
+                          ? Image.memory(
+                              base64Decode(fotoPerfilBase64!),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            )
+                          : Container(
+                              color: const Color(0xFF0A84FF),
+                              child: const Icon(Icons.person, size: 44, color: Colors.white),
+                            ),
+                    ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    bottom: 0,
+                    right: 100,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF0A84FF),
+                        shape: BoxShape.circle,
+                        border: Border.fromBorderSide(BorderSide(color: Colors.white, width: 2)),
+                      ),
+                      child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -128,7 +155,6 @@ class PerfilScreen extends StatelessWidget {
           _BarraStat(label: 'XP', percentual: xpPercentual, cor: _corXp),
           const SizedBox(height: 12),
           _BarraStat(label: 'HP', percentual: hpPercentual, cor: _corHp),
-          
           const SizedBox(height: 28),
           Text(
             'Medalhas ($desbloqueadas/${medalhas.length})',

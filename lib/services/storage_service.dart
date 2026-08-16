@@ -14,6 +14,7 @@ class EstadoFinQuest {
     required this.nomeJogador,
     required this.nivel,
     required this.xpAtual,
+    this.fotoPerfilBase64,
   });
 
   final List<Categoria> categorias;
@@ -23,6 +24,7 @@ class EstadoFinQuest {
   final String nomeJogador;
   final int nivel;
   final int xpAtual;
+  final String? fotoPerfilBase64;
 }
 
 /// Salva e carrega o estado do FinQuest usando SharedPreferences
@@ -40,6 +42,7 @@ class StorageService {
       'nomeJogador': estado.nomeJogador,
       'nivel': estado.nivel,
       'xpAtual': estado.xpAtual,
+      'fotoPerfilBase64': estado.fotoPerfilBase64,
     };
     await prefs.setString(_chave, jsonEncode(mapa));
   }
@@ -71,6 +74,7 @@ class StorageService {
       nomeJogador: mapa['nomeJogador'] as String,
       nivel: mapa['nivel'] as int,
       xpAtual: mapa['xpAtual'] as int,
+      fotoPerfilBase64: mapa['fotoPerfilBase64'] as String?,
     );
   }
 }
