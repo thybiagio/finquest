@@ -14,6 +14,11 @@ class HomeContent extends StatelessWidget {
     required this.receitaTotal,
     required this.despesaTotal,
     required this.saldo,
+    required this.economiaTotal,
+    required this.onEditarTransacao,
+    required this.onExcluirTransacao,
+    required this.onEditarCategoria,
+    required this.onExcluirCategoria,
   });
 
   final List<Categoria> categorias;
@@ -21,6 +26,11 @@ class HomeContent extends StatelessWidget {
   final double receitaTotal;
   final double despesaTotal;
   final double saldo;
+  final double economiaTotal;
+  final ValueChanged<Transacao> onEditarTransacao;
+  final ValueChanged<Transacao> onExcluirTransacao;
+  final ValueChanged<Categoria> onEditarCategoria;
+  final ValueChanged<Categoria> onExcluirCategoria;
 
   @override
   Widget build(BuildContext context) {
@@ -58,8 +68,12 @@ class HomeContent extends StatelessWidget {
                         ),
                       ),
                       const VerticalDivider(width: 1, thickness: 1, color: Color(0x14000000)),
-                      const Expanded(
-                        child: _StatCell(label: 'Economia', value: 'R\$ 800', valueColor: Color(0xFF30D158)),
+                      Expanded(
+                        child: _StatCell(
+                          label: 'Economia',
+                          value: 'R\$ ${economiaTotal.toStringAsFixed(0)}',
+                          valueColor: const Color(0xFF30D158),
+                        ),
                       ),
                     ],
                   ),
@@ -76,7 +90,14 @@ class HomeContent extends StatelessWidget {
           const SizedBox(height: 10),
           if (categorias.isNotEmpty)
             GroupedCard(
-              children: [for (final categoria in categorias) CategoriaCard(categoria: categoria)],
+              children: [
+                for (final categoria in categorias)
+                  CategoriaCard(
+                    categoria: categoria,
+                    onEditar: () => onEditarCategoria(categoria),
+                    onExcluir: () => onExcluirCategoria(categoria),
+                  ),
+              ],
             ),
           const SizedBox(height: 24),
           const Text('Histórico', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black54)),
@@ -95,7 +116,14 @@ class HomeContent extends StatelessWidget {
             )
           else
             GroupedCard(
-              children: [for (final transacao in transacoes.reversed) TransacaoTile(transacao: transacao)],
+              children: [
+                for (final transacao in transacoes.reversed)
+                  TransacaoTile(
+                    transacao: transacao,
+                    onEditar: () => onEditarTransacao(transacao),
+                    onExcluir: () => onExcluirTransacao(transacao),
+                  ),
+              ],
             ),
           const SizedBox(height: 80),
         ],

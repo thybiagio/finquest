@@ -55,12 +55,12 @@ class StorageService {
         .map((c) => Categoria.fromMap(c as Map<String, dynamic>))
         .toList();
 
-    final transacoes = (mapa['transacoes'] as List)
-        .map((t) => Transacao.fromMap(t as Map<String, dynamic>, categorias))
-        .toList();
-
     final metas = (mapa['metas'] as List)
         .map((m) => Meta.fromMap(m as Map<String, dynamic>))
+        .toList();
+
+    final transacoes = (mapa['transacoes'] as List)
+        .map((t) => Transacao.fromMap(t as Map<String, dynamic>, categorias, metas))
         .toList();
 
     return EstadoFinQuest(

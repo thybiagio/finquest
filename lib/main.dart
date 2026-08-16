@@ -7,6 +7,7 @@ import 'screens/categorias_content.dart';
 import 'screens/metas_content.dart';
 import 'screens/perfil_screen.dart';
 import 'widgets/progress_rings.dart';
+import 'widgets/long_press_action_menu.dart';
 import 'models/meta.dart';
 import 'services/storage_service.dart';
 
@@ -116,6 +117,7 @@ class _AppShellState extends State<AppShell> {
 
   double get _despesaTotal => _categorias.fold(0.0, (soma, c) => soma + c.gastoAtual);
   double get _saldo => _receitaTotal - _despesaTotal;
+  double get _economiaTotal => _metas.fold(0.0, (soma, m) => soma + m.valorAtual);
 
   double get _xpPercentual => _xpAtual / _xpPorNivel;
 
@@ -144,12 +146,33 @@ class _AppShellState extends State<AppShell> {
     _salvarEstadoAtual();
   }
 
+  // ---------------------- Categorias ----------------------
+
   void _adicionarCategoria(Categoria categoria) {
     setState(() {
       _categorias = [..._categorias, categoria];
     });
     _salvarEstadoAtual();
   }
+
+  void _editarCategoria(Categoria categoria, {required String nome, required double orcamentoMensal}) {
+    final index = _categorias.indexWhere((c) => c.id == categoria.id);
+    if (index == -1) return;
+    setState(() {
+      _categorias[index] = _categorias[index].copyWith(nome: nome, orcamentoMensal: orcamentoMensal);
+    });
+    _salvarEstadoAtual();
+  }
+
+  void _excluirCategoria(Categoria categoria) {
+    setState(() {
+      _transacoes.removeWhere((t) => t.categoria?.id == categoria.id);
+      _categorias.removeWhere((c) => c.id == categoria.id);
+    });
+    _salvarEstadoAtual();
+  }
+
+  // ------------------------- Metas -------------------------
 
   void _adicionarMeta(Meta meta) {
     setState(() {
@@ -158,13 +181,53 @@ class _AppShellState extends State<AppShell> {
     _salvarEstadoAtual();
   }
 
+  void _editarMeta(Meta meta, {required String titulo, required double valorAlvo}) {
+    final index = _metas.indexWhere((m) => m.id == meta.id);
+    if (index == -1) return;
+    setState(() {
+      _metas[index] = _metas[index].copyWith(titulo: titulo, valorAlvo: valorAlvo);
+    });
+    _salvarEstadoAtual();
+  }
+
+  void _excluirMeta(Meta meta) {
+    setState(() {
+      _transacoes.removeWhere((t) => t.meta?.id == meta.id);
+      _metas.removeWhere((m) => m.id == meta.id);
+    });
+    _salvarEstadoAtual();
+  }
+
   void _contribuirParaMeta(Meta meta, double valor) {
-    final index = _metas.indexOf(meta);
+    final index = _metas.indexWhere((m) => m.id == meta.id);
     if (index != -1) {
-      final metaAtualizada = meta.copyWith(valorAtual: meta.valorAtual + valor);
+      final metaAtualizada = _metas[index].copyWith(valorAtual: _metas[index].valorAtual + valor);
+      final estavaConcluida = _metas[index].concluida;
       _metas[index] = metaAtualizada;
-      if (!meta.concluida && metaAtualizada.concluida) {
+      if (!estavaConcluida && metaAtualizada.concluida) {
         _ganharXp(50);
+      }
+    }
+  }
+
+  // ---------------------- Transações ----------------------
+
+  /// Desfaz o efeito de uma transação no saldo/orçamento/meta — usado antes
+  /// de editar ou excluir, para não deixar valores "fantasmas" contados.
+  void _reverterEfeitoTransacao(Transacao transacao) {
+    if (transacao.isReceita) {
+      if (transacao.meta != null) {
+        final index = _metas.indexWhere((m) => m.id == transacao.meta!.id);
+        if (index != -1) {
+          _metas[index] = _metas[index].copyWith(valorAtual: _metas[index].valorAtual - transacao.valor);
+        }
+      } else {
+        _receitaTotal -= transacao.valor;
+      }
+    } else if (transacao.categoria != null) {
+      final index = _categorias.indexWhere((c) => c.id == transacao.categoria!.id);
+      if (index != -1) {
+        _categorias[index] = _categorias[index].copyWith(gastoAtual: _categorias[index].gastoAtual - transacao.valor);
       }
     }
   }
@@ -185,9 +248,9 @@ class _AppShellState extends State<AppShell> {
           _receitaTotal += valor;
         }
       } else if (categoria != null) {
-        final index = _categorias.indexOf(categoria);
+        final index = _categorias.indexWhere((c) => c.id == categoria.id);
         if (index != -1) {
-          _categorias[index] = categoria.copyWith(gastoAtual: categoria.gastoAtual + valor);
+          _categorias[index] = _categorias[index].copyWith(gastoAtual: _categorias[index].gastoAtual + valor);
         }
       }
       _transacoes.add(
@@ -197,6 +260,7 @@ class _AppShellState extends State<AppShell> {
           tipo: tipo,
           data: DateTime.now(),
           categoria: tipo == TipoTransacao.despesa ? categoria : null,
+          meta: tipo == TipoTransacao.receita ? metaDestino : null,
           descricao: descricao,
         ),
       );
@@ -204,12 +268,64 @@ class _AppShellState extends State<AppShell> {
     _salvarEstadoAtual();
   }
 
-  Future<void> _abrirNovaTransacao(BuildContext context) async {
-    final valorController = TextEditingController();
-    final descricaoController = TextEditingController();
-    var tipo = TipoTransacao.despesa;
-    Categoria? categoriaSelecionada = _categorias.isNotEmpty ? _categorias.first : null;
-    Meta? metaSelecionada;
+  void _editarTransacao(
+    Transacao original, {
+    required double valor,
+    required TipoTransacao tipo,
+    Categoria? categoria,
+    String? descricao,
+    Meta? metaDestino,
+  }) {
+    setState(() {
+      _reverterEfeitoTransacao(original);
+
+      if (tipo == TipoTransacao.receita) {
+        if (metaDestino != null) {
+          _contribuirParaMeta(metaDestino, valor);
+        } else {
+          _receitaTotal += valor;
+        }
+      } else if (categoria != null) {
+        final index = _categorias.indexWhere((c) => c.id == categoria.id);
+        if (index != -1) {
+          _categorias[index] = _categorias[index].copyWith(gastoAtual: _categorias[index].gastoAtual + valor);
+        }
+      }
+
+      final indexTransacao = _transacoes.indexWhere((t) => t.id == original.id);
+      if (indexTransacao != -1) {
+        _transacoes[indexTransacao] = Transacao(
+          id: original.id,
+          valor: valor,
+          tipo: tipo,
+          data: original.data,
+          categoria: tipo == TipoTransacao.despesa ? categoria : null,
+          meta: tipo == TipoTransacao.receita ? metaDestino : null,
+          descricao: descricao,
+        );
+      }
+    });
+    _salvarEstadoAtual();
+  }
+
+  void _excluirTransacao(Transacao transacao) {
+    setState(() {
+      _reverterEfeitoTransacao(transacao);
+      _transacoes.removeWhere((t) => t.id == transacao.id);
+    });
+    _salvarEstadoAtual();
+  }
+
+  Future<void> _abrirFormularioTransacao(BuildContext context, {Transacao? transacaoEditando}) async {
+    final editando = transacaoEditando != null;
+    final valorController = TextEditingController(
+      text: editando ? transacaoEditando.valor.toStringAsFixed(2) : '',
+    );
+    final descricaoController = TextEditingController(text: transacaoEditando?.descricao ?? '');
+    var tipo = transacaoEditando?.tipo ?? TipoTransacao.despesa;
+    Categoria? categoriaSelecionada = transacaoEditando?.categoria ??
+        (_categorias.isNotEmpty ? _categorias.first : null);
+    Meta? metaSelecionada = transacaoEditando?.meta;
 
     await showModalBottomSheet(
       context: context,
@@ -224,7 +340,10 @@ class _AppShellState extends State<AppShell> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Nova transação', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    editando ? 'Editar transação' : 'Nova transação',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 16),
                   SegmentedButton<TipoTransacao>(
                     segments: const [
@@ -281,16 +400,27 @@ class _AppShellState extends State<AppShell> {
                         if (valor <= 0) return;
                         if (tipo == TipoTransacao.despesa && categoriaSelecionada == null) return;
 
-                        _registrarTransacao(
-                          valor: valor,
-                          tipo: tipo,
-                          categoria: tipo == TipoTransacao.despesa ? categoriaSelecionada : null,
-                          descricao: descricaoController.text.trim().isEmpty ? null : descricaoController.text.trim(),
-                          metaDestino: tipo == TipoTransacao.receita ? metaSelecionada : null,
-                        );
+                        if (editando) {
+                          _editarTransacao(
+                            transacaoEditando,
+                            valor: valor,
+                            tipo: tipo,
+                            categoria: tipo == TipoTransacao.despesa ? categoriaSelecionada : null,
+                            descricao: descricaoController.text.trim().isEmpty ? null : descricaoController.text.trim(),
+                            metaDestino: tipo == TipoTransacao.receita ? metaSelecionada : null,
+                          );
+                        } else {
+                          _registrarTransacao(
+                            valor: valor,
+                            tipo: tipo,
+                            categoria: tipo == TipoTransacao.despesa ? categoriaSelecionada : null,
+                            descricao: descricaoController.text.trim().isEmpty ? null : descricaoController.text.trim(),
+                            metaDestino: tipo == TipoTransacao.receita ? metaSelecionada : null,
+                          );
+                        }
                         Navigator.of(context).pop();
                       },
-                      child: const Text('Salvar'),
+                      child: Text(editando ? 'Salvar alterações' : 'Salvar'),
                     ),
                   ),
                 ],
@@ -300,6 +430,144 @@ class _AppShellState extends State<AppShell> {
         );
       },
     );
+  }
+
+  Future<void> _abrirFormularioCategoria(BuildContext context, {Categoria? categoriaEditando}) async {
+    final editando = categoriaEditando != null;
+    final nomeController = TextEditingController(text: categoriaEditando?.nome ?? '');
+    final orcamentoController = TextEditingController(
+      text: editando ? categoriaEditando.orcamentoMensal.toStringAsFixed(2) : '',
+    );
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                editando ? 'Editar categoria' : 'Nova categoria',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(controller: nomeController, decoration: const InputDecoration(labelText: 'Nome da categoria')),
+              const SizedBox(height: 12),
+              TextField(controller: orcamentoController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Orçamento mensal')),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final nome = nomeController.text.trim();
+                    final orcamento = double.tryParse(orcamentoController.text) ?? 0;
+                    if (nome.isEmpty || orcamento <= 0) return;
+
+                    if (editando) {
+                      _editarCategoria(categoriaEditando, nome: nome, orcamentoMensal: orcamento);
+                    } else {
+                      _adicionarCategoria(
+                        Categoria(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          nome: nome,
+                          corHex: '#0A84FF',
+                          orcamentoMensal: orcamento,
+                        ),
+                      );
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(editando ? 'Salvar alterações' : 'Criar categoria'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _abrirFormularioMeta(BuildContext context, {Meta? metaEditando}) async {
+    final editando = metaEditando != null;
+    final tituloController = TextEditingController(text: metaEditando?.titulo ?? '');
+    final valorController = TextEditingController(
+      text: editando ? metaEditando.valorAlvo.toStringAsFixed(2) : '',
+    );
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(left: 20, right: 20, top: 20, bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                editando ? 'Editar meta' : 'Nova meta',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              TextField(controller: tituloController, decoration: const InputDecoration(labelText: 'Título da meta')),
+              const SizedBox(height: 12),
+              TextField(controller: valorController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Valor alvo')),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final titulo = tituloController.text.trim();
+                    final valorAlvo = double.tryParse(valorController.text) ?? 0;
+                    if (titulo.isEmpty || valorAlvo <= 0) return;
+
+                    if (editando) {
+                      _editarMeta(metaEditando, titulo: titulo, valorAlvo: valorAlvo);
+                    } else {
+                      _adicionarMeta(
+                        Meta(
+                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                          titulo: titulo,
+                          valorAlvo: valorAlvo,
+                        ),
+                      );
+                    }
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(editando ? 'Salvar alterações' : 'Criar meta'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmarExcluirTransacao(BuildContext context, Transacao transacao) async {
+    final confirmado = await confirmarExclusao(context, mensagem: 'Essa transação será removida e seu efeito no saldo/orçamento desfeito.');
+    if (confirmado) _excluirTransacao(transacao);
+  }
+
+  Future<void> _confirmarExcluirCategoria(BuildContext context, Categoria categoria) async {
+    final confirmado = await confirmarExclusao(
+      context,
+      mensagem: 'A categoria "${categoria.nome}" e as transações associadas a ela serão excluídas.',
+    );
+    if (confirmado) _excluirCategoria(categoria);
+  }
+
+  Future<void> _confirmarExcluirMeta(BuildContext context, Meta meta) async {
+    final confirmado = await confirmarExclusao(
+      context,
+      mensagem: 'A meta "${meta.titulo}" e as transações associadas a ela serão excluídas.',
+    );
+    if (confirmado) _excluirMeta(meta);
   }
 
   @override
@@ -317,12 +585,24 @@ class _AppShellState extends State<AppShell> {
         receitaTotal: _receitaTotal,
         despesaTotal: _despesaTotal,
         saldo: _saldo,
+        economiaTotal: _economiaTotal,
+        onEditarTransacao: (t) => _abrirFormularioTransacao(context, transacaoEditando: t),
+        onExcluirTransacao: (t) => _confirmarExcluirTransacao(context, t),
+        onEditarCategoria: (c) => _abrirFormularioCategoria(context, categoriaEditando: c),
+        onExcluirCategoria: (c) => _confirmarExcluirCategoria(context, c),
       ),
       CategoriasContent(
         categorias: _categorias,
-        onAdicionarCategoria: _adicionarCategoria,
+        onNovaCategoria: () => _abrirFormularioCategoria(context),
+        onEditarCategoria: (c) => _abrirFormularioCategoria(context, categoriaEditando: c),
+        onExcluirCategoria: (c) => _confirmarExcluirCategoria(context, c),
       ),
-      MetasContent(metas: _metas, onAdicionarMeta: _adicionarMeta),
+      MetasContent(
+        metas: _metas,
+        onNovaMeta: () => _abrirFormularioMeta(context),
+        onEditarMeta: (m) => _abrirFormularioMeta(context, metaEditando: m),
+        onExcluirMeta: (m) => _confirmarExcluirMeta(context, m),
+      ),
       PerfilScreen(
         nome: _nomeJogador,
         nivel: _nivel,
@@ -356,7 +636,7 @@ class _AppShellState extends State<AppShell> {
       body: IndexedStack(index: _abaAtual, children: telas),
       floatingActionButton: _abaAtual == 0
           ? FloatingActionButton(
-              onPressed: () => _abrirNovaTransacao(context),
+              onPressed: () => _abrirFormularioTransacao(context),
               backgroundColor: const Color(0xFF0A84FF),
               child: const Icon(Icons.add),
             )
